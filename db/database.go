@@ -1,8 +1,14 @@
 package db
 
 import (
+	"bytes"
 	"database/sql"
 	"fmt"
+	"os"
+	"strings"
+
+	// initialize the mysql driver
+	_ "github.com/go-sql-driver/mysql"
 )
 
 // Config contains the configuration for the database connection.
@@ -34,4 +40,46 @@ func (d *Database) InitDb(cfg *Config) error {
 // ToString returns a string representation of the Config object
 func (cfg *Config) ToString() string {
 	return fmt.Sprintf("dbname: %s\ndbhost: %s\ndbuser: %s\ndbpass: %s\n", cfg.Name, cfg.Host, cfg.User, cfg.Pass)
+}
+
+// SetupDatabase creates the database setup from sql/db.sql.
+func (d *Database) SetupDatabase() error {
+	f, err := os.Open("./sql/init.sql")
+	if err != nil {
+		return err
+	}
+	buf := new(bytes.Buffer)
+	_, err = buf.ReadFrom(f)
+	if err != nil {
+		return err
+	}
+	contents := buf.String()
+
+	queryList := strings.Split(contents, ";")
+
+	tx, err := d.db.Begin()
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		_ = tx.Rollback()
+	}()
+
+	for _, query := range queryList {
+		fmt.Print(query)
+		if len(query) > 0 {
+			_, err := d.db.Exec(query)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
