@@ -4,14 +4,16 @@ import (
 	"fmt"
 	"io/ioutil"
 
+	"git.code-cloppers.com/max/quotezak/bot"
 	"git.code-cloppers.com/max/quotezak/db"
 	"gopkg.in/yaml.v2"
 )
 
 // Config is a struct that contains the configuration data for the application.
 type Config struct {
-	Port     int       `yaml:"port"`
-	Database db.Config `yaml:"database"`
+	Port     int        `yaml:"port"`
+	Database db.Config  `yaml:"database"`
+	Bot      bot.Config `yaml:"irc"`
 }
 
 // FromFile reads a yaml config file and returns a Config object

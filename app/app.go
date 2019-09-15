@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"os"
 
+	"git.code-cloppers.com/max/quotezak/bot"
 	"git.code-cloppers.com/max/quotezak/db"
+	"git.code-cloppers.com/max/quotezak/messaging"
 )
 
 // Application is a runnable object that will run the service.
@@ -66,8 +68,16 @@ func (a *Application) Run() error {
 			return err
 		}
 	}
+	messenger := messaging.NewMessenger(db.DB)
+	bot := bot.New(&cfg.Bot, messenger)
+	return bot.Start()
+	// q := models.NewQuote("test", "test", "test", 2019)
 
-	return nil
+	// err = q.Save(a.db.DB)
+	// if err != nil {
+	// 	return err
+	// }
+
 }
 
 func (a *Application) initDb(db *db.Database, cfg *db.Config) error {

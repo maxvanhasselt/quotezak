@@ -21,7 +21,7 @@ type Config struct {
 
 // Database containse the sql.DB object.
 type Database struct {
-	db *sql.DB
+	DB *sql.DB
 }
 
 // InitDb starts a database connection and sets the DB object in the Database struct.
@@ -33,7 +33,7 @@ func (d *Database) InitDb(cfg *Config) error {
 		return err
 	}
 
-	d.db = db
+	d.DB = db
 	return nil
 }
 
@@ -57,7 +57,7 @@ func (d *Database) SetupDatabase() error {
 
 	queryList := strings.Split(contents, ";")
 
-	tx, err := d.db.Begin()
+	tx, err := d.DB.Begin()
 	if err != nil {
 		return err
 	}
@@ -69,7 +69,7 @@ func (d *Database) SetupDatabase() error {
 	for _, query := range queryList {
 		fmt.Print(query)
 		if len(query) > 0 {
-			_, err := d.db.Exec(query)
+			_, err := d.DB.Exec(query)
 			if err != nil {
 				return err
 			}
