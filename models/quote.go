@@ -87,7 +87,7 @@ func (q *Quote) Delete(db *sql.DB, name string) error {
 		_ = tx.Rollback()
 	}()
 
-	_, err = db.Query("DELETE FROM quote WHERE quote_name LIKE ?", name)
+	_, err = db.Query("DELETE FROM quote WHERE quote_name LIKE '?'", name)
 
 	if err != nil {
 		return err
@@ -105,7 +105,7 @@ func GetQuoteByName(db *sql.DB, name string) (*Quote, error) {
 
 	qu := &Quote{}
 
-	row := db.QueryRow("SELECT quote_name, quote, owner, date FROM quote WHERE quote_name LIKE ?;", name)
+	row := db.QueryRow("SELECT quote_name, quote, owner, date FROM quote WHERE quote_name LIKE ? ORDER BY RAND() LIMIT 1;", name)
 
 	err := row.Scan(&qu.Name, &qu.Quote, &qu.Owner, &qu.Date)
 	if err != nil {
@@ -119,7 +119,7 @@ func GetRandomQuote(db *sql.DB) (*Quote, error) {
 
 	qu := &Quote{}
 
-	rows := db.QueryRow("SELECT quote_name, quote, owner, date FROM quote ORDER BY RAND() LIMIT 1")
+	rows := db.QueryRow("SELECT quote_name, quote, owner, date FROM quote ORDER BY RAND() LIMIT 1;")
 
 	err := rows.Scan(&qu.Name, &qu.Quote, &qu.Owner, &qu.Date)
 
@@ -134,7 +134,7 @@ func GetRandomOwner(db *sql.DB, owner string) (*Quote, error) {
 
 	qu := &Quote{}
 
-	rows := db.QueryRow("SELECT quote_name, quote, owner, date FROM quote WHERE owner LIKE ? ORDER BY RAND() LIMIT 1", owner)
+	rows := db.QueryRow("SELECT quote_name, quote, owner, date FROM quote WHERE owner LIKE ? ORDER BY RAND() LIMIT 1;", owner)
 
 	err := rows.Scan(&qu.Name, &qu.Quote, &qu.Owner, &qu.Date)
 
@@ -149,7 +149,7 @@ func GetRandomCategory(db *sql.DB, cat string) (*Quote, error) {
 
 	qu := &Quote{}
 
-	rows := db.QueryRow("SELECT quote_name, quote, owner, date FROM quote WHERE category LIKE ? ORDER BY RAND() LIMIT 1", cat)
+	rows := db.QueryRow("SELECT quote_name, quote, owner, date FROM quote WHERE category LIKE ? ORDER BY RAND() LIMIT 1;", cat)
 
 	err := rows.Scan(&qu.Name, &qu.Quote, &qu.Owner, &qu.Date)
 

@@ -10,6 +10,7 @@ import (
 	"git.code-cloppers.com/max/quotezak/models"
 )
 
+// Messenger handles the commands that get fed into the bot
 type Messenger struct {
 	db *sql.DB
 }
@@ -20,12 +21,14 @@ type Message struct {
 	params  []string
 }
 
+// NewMessenger returns a pointer to a new Messenger object
 func NewMessenger(db *sql.DB) *Messenger {
 	return &Messenger{
 		db: db,
 	}
 }
 
+// GenerateMessage takes input and returns a message if neccesary
 func (m *Messenger) GenerateMessage(msg string) *string {
 	ms := m.parseMessage(msg)
 	return m.routeMessage(ms)
@@ -116,8 +119,11 @@ func (m *Messenger) handleAddQuote(params []string) string {
 	re := regexp.MustCompile("(^\"[^\"]*\") (\"[^\"]*\") ([0-9]*) (\"[^\"]*\") (#.*)")
 	results := re.FindStringSubmatch(strings.Join(params, " "))
 
-	re = regexp.MustCompile("[^a-zA-z0-9 ?]*")
-	for i, _ := range results {
+	if len(results) == 0 {
+		return "Format not recognized, please use '\"Quote\" \"Who said it\" <year> \"quote name\" #category'"
+	}
+	re = regexp.MustCompile("[^a-zA-z0-9 ?!.,]*")
+	for i := range results {
 		results[i] = re.ReplaceAllString(results[i], "")
 	}
 
@@ -125,6 +131,7 @@ func (m *Messenger) handleAddQuote(params []string) string {
 	err := quote.Save(m.db)
 	if err != nil {
 		fmt.Println(err)
+		return fmt.Sprintf("Error saving quote: %s", err)
 	}
 
 	return "Quote saved!"
