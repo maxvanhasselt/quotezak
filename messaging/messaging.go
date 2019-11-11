@@ -6,6 +6,7 @@ import (
 	"log"
 	"regexp"
 	"strings"
+	"unicode/utf8"
 
 	"git.code-cloppers.com/max/quotezak/models"
 )
@@ -34,29 +35,37 @@ func (m *Messenger) GenerateMessage(msg string) *string {
 	return m.routeMessage(ms)
 }
 
-func isCommand(c string) bool {
-	for _, a := range []string{"quote", "addquote"} {
-		if a == c {
-			return true
-		}
+func isCommand(c string) (bool, int) {
+	r, i := utf8.DecodeRuneInString(c)
+	if r != '!' {
+		fmt.Print("hee")
+		return false, 0
 	}
-	return false
+	// for _, a := range []string{"quote", "addquote"} {
+	// 	if a == c {
+	// 		return true, i
+	// 	}
+	//}
+	fmt.Println("HOER")
+	return true, i
 }
 
 func (m *Messenger) routeMessage(msg *Message) *string {
 	var target string
 	if len(msg.params) >= 2 {
+		fmt.Println("HOER")
 		switch msg.params[0] {
 		case "quotezak":
 			re := regexp.MustCompile("^[^!]*")
 			target = re.FindStringSubmatch(msg.prefix)[0]
 		default:
 			target = msg.params[0]
-			//fmt.Println(msg.params[0])
-			//return nil
 		}
 		command := strings.Split(msg.params[1], " ")
-		if isCommand(command[0]) {
+
+		fmt.Print(command)
+		if b, i := isCommand(command[0]); b {
+			command[0] = command[0][i:]
 			str := fmt.Sprintf("PRIVMSG %s :%s\n", target, m.handleCommand(command))
 			return &str
 		}
@@ -71,7 +80,7 @@ func (m *Messenger) handleCommand(params []string) string {
 	case "addquote":
 		return m.handleAddQuote(params[1:])
 	}
-	return "niks nier"
+	return params[0]
 }
 
 func (m *Messenger) handleGetQuote(params []string) string {

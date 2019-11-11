@@ -71,12 +71,6 @@ func (a *Application) Run() error {
 	messenger := messaging.NewMessenger(db.DB)
 	bot := bot.New(&cfg.Bot, messenger)
 	return bot.Start()
-	// q := models.NewQuote("test", "test", "test", 2019)
-
-	// err = q.Save(a.db.DB)
-	// if err != nil {
-	// 	return err
-	// }
 
 }
 

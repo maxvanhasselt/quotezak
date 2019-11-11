@@ -3,9 +3,11 @@ package bot
 import (
 	"bufio"
 	"fmt"
+	"log"
 	"net"
 	"regexp"
 	"sync"
+	"time"
 
 	"git.code-cloppers.com/max/quotezak/messaging"
 )
@@ -14,6 +16,7 @@ type Bot struct {
 	Cfg *Config
 	msr *messaging.Messenger
 
+	conn     *net.Conn
 	incoming chan string
 	outgoing chan string
 	wg       *sync.WaitGroup
@@ -42,8 +45,9 @@ func (b *Bot) Start() error {
 	if err != nil {
 		return err
 	}
-	b.reader = bufio.NewReader(conn)
-	b.writer = bufio.NewWriter(conn)
+	b.conn = &conn
+	b.reader = bufio.NewReader(*b.conn)
+	b.writer = bufio.NewWriter(*b.conn)
 
 	go b.ReadSocket()
 	go b.HandleRecieve()
@@ -57,15 +61,32 @@ func (b *Bot) Start() error {
 
 func (b *Bot) ReadSocket() {
 	defer b.wg.Done()
-
 	for {
 		if line, err := b.reader.ReadString('\n'); err != nil {
 			fmt.Println(err)
-			break
+			err := b.restartConnection()
+			if err != nil {
+				log.Fatal(err)
+			}
 		} else {
 			b.incoming <- line
 		}
 	}
+}
+
+func (b *Bot) restartConnection() error {
+	for try := 1; try <= 10; try++ {
+		conn, err := net.Dial("tcp", fmt.Sprintf("%s:%s", b.Cfg.Server, b.Cfg.Port))
+		if err != nil {
+			fmt.Printf("Error %s when reconnecting, retrying %d times", err, (10 - try))
+			time.Sleep(time.Duration(2*try) * time.Second)
+		} else {
+			b.conn = &conn
+			b.reader = bufio.NewReader(*b.conn)
+			b.writer = bufio.NewWriter(*b.conn)
+		}
+	}
+	return fmt.Errorf("Could not reconnect to remote service, shutting down")
 }
 
 func (b *Bot) HandleSend() {
@@ -92,7 +113,6 @@ func (b *Bot) HandleCommand(msg string) {
 		b.outgoing <- fmt.Sprintf("PONG :%s", matches[1])
 	}
 	m := b.msr.GenerateMessage(msg)
-	fmt.Println(m)
 	if m != nil {
 		b.outgoing <- *m
 	}
