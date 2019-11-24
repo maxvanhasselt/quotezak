@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"git.code-cloppers.com/max/quotezak/bot"
 	"git.code-cloppers.com/max/quotezak/db"
@@ -35,10 +36,16 @@ func (a *Application) Run() error {
 	fs.BoolVar(&showUsage, "help", false, "Show this message")
 	fs.BoolVar(&showVersion, "version", false, "Print version info")
 	fs.BoolVar(&setupDb, "setup-db", false, "Set up the database for first use")
-	fs.StringVar(&envPath, "env", ".env.yml", "path to env file")
+
+	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
+	if err != nil {
+		return err
+	}
+
+	fs.StringVar(&envPath, "env", fmt.Sprintf("%s/.env.yml", dir), "path to env file")
 
 	// Parse commandline arguments
-	err := fs.Parse(a.args[1:])
+	err = fs.Parse(a.args[1:])
 	if err != nil {
 		return err
 	}
